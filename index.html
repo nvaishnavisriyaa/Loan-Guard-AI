@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LoanGuard AI</title>
+<style>
+:root{
+  --bg:#f8f6f2;
+  --card:#ffffff;
+  --text:#12233d;
+  --muted:#66758a;
+  --border:#e6e8ee;
+  --primary:#f59e0b;
+  --primary-dark:#d97706;
+  --low:#16a34a;
+  --low-bg:#dcfce7;
+  --medium:#d97706;
+  --medium-bg:#fef3c7;
+  --high:#dc2626;
+  --high-bg:#fee2e2;
+  --blue:#2563eb;
+  --blue-bg:#dbeafe;
+  --shadow:0 10px 30px rgba(16,24,40,.08);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter, Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+.container{
+  max-width:1180px;
+  margin:32px auto 48px;
+  padding:0 18px;
+}
+.header{
+  text-align:center;
+  margin-bottom:28px;
+}
+.header h1{
+  font-size:3rem;
+  margin:0 0 8px;
+  letter-spacing:-.02em;
+}
+.header p{
+  margin:0;
+  color:var(--muted);
+  font-size:1.05rem;
+}
+
+.hero-card,
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+}
+.hero-card{
+  padding:24px;
+  margin-bottom:22px;
+}
+.upload-zone{
+  border:2px dashed #d6dbe6;
+  border-radius:16px;
+  padding:28px 20px;
+  text-align:center;
+  transition:.2s ease;
+  background:#fcfcfd;
+}
+.upload-zone:hover{
+  border-color:var(--primary);
+  background:#fffaf0;
+}
+.upload-zone.drag{
+  border-color:var(--primary);
+  background:#fff7e6;
+}
+.upload-zone input[type="file"]{
+  display:block;
+  margin:0 auto 14px;
+}
+.upload-note{
+  color:var(--muted);
+  font-size:.95rem;
+  margin-top:8px;
+}
+
+.action-row{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-top:18px;
+}
+button{
+  border:none;
+  border-radius:10px;
+  padding:12px 18px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.15s ease;
+}
+button:hover{transform:translateY(-1px)}
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+  transform:none;
+}
+.btn-primary{
+  background:var(--primary);
+  color:#111827;
+}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-secondary{
+  background:#eef2f7;
+  color:var(--text);
+}
+.btn-secondary:hover{background:#e5ebf3}
+.btn-outline{
+  background:#fff;
+  border:1px solid var(--border);
+  color:var(--text);
+}
+
+.file-list{
+  margin-top:18px;
+  display:grid;
+  gap:10px;
+}
+.file-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:12px 14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fbfcfe;
+}
+.file-name{
+  font-weight:600;
+  word-break:break-word;
+}
+.file-meta{
+  color:var(--muted);
+  font-size:.88rem;
+}
+
+.status{
+  margin:18px 0;
+}
+.status-card{
+  padding:14px 16px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#fff;
+}
+.status-loading{
+  background:var(--blue-bg);
+  color:var(--blue);
+  border-color:#bfdbfe;
+}
+.status-success{
+  background:#ecfdf3;
+  color:#15803d;
+  border-color:#bbf7d0;
+}
+.status-error{
+  background:#fef2f2;
+  color:#b91c1c;
+  border-color:#fecaca;
+}
+
+.features-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;
+  margin-top:18px;
+}
+.feature-tile{
+  border:1px solid var(--border);
+  background:#fcfcfd;
+  border-radius:14px;
+  padding:16px;
+}
+.feature-tile h4{
+  margin:0 0 8px;
+  font-size:1rem;
+}
+.feature-tile p{
+  margin:0;
+  color:var(--muted);
+  font-size:.92rem;
+  line-height:1.5;
+}
+
+.results-section{
+  display:grid;
+  gap:18px;
+}
+.risk-card{
+  padding:22px;
+}
+.risk-header{
+  display:grid;
+  grid-template-columns:1fr 140px;
+  gap:18px;
+  align-items:center;
+}
+.score-wrap{
+  display:flex;
+  justify-content:center;
+}
+.score-circle{
+  width:124px;
+  height:124px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:2rem;
+  font-weight:800;
+  color:var(--text);
+  background:conic-gradient(var(--primary) 0%, #eceff4 0%);
+  position:relative;
+}
+.score-circle::after{
+  content:"";
+  position:absolute;
+  inset:11px;
+  background:#fff;
+  border-radius:50%;
+  z-index:0;
+}
+.score-circle span{
+  position:relative;
+  z-index:1;
+}
+.kpi-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;
+  margin-top:18px;
+}
+.kpi{
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px;
+  background:#fcfcfd;
+}
+.kpi-label{
+  color:var(--muted);
+  font-size:.88rem;
+  margin-bottom:6px;
+}
+.kpi-value{
+  font-size:1.5rem;
+  font-weight:800;
+}
+.section-title{
+  margin:0 0 14px;
+  font-size:1.7rem;
+}
+.subtle{
+  color:var(--muted);
+}
+
+.clauses-card,
+.report-card,
+.compare-card{
+  padding:22px;
+}
+.clause-list{
+  display:grid;
+  gap:14px;
+}
+.clause{
+  border-left:5px solid var(--border);
+  background:#fafafa;
+  border-radius:12px;
+  padding:16px 16px 14px;
+}
+.clause.low{border-left-color:var(--low)}
+.clause.medium{border-left-color:var(--medium)}
+.clause.high{border-left-color:var(--high)}
+.clause-top{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+.clause-title{
+  font-size:1.08rem;
+  font-weight:800;
+  margin-bottom:4px;
+}
+.clause-type{
+  color:var(--muted);
+  font-size:.92rem;
+}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  border-radius:999px;
+  padding:5px 10px;
+  font-size:.78rem;
+  font-weight:800;
+}
+.badge.low{background:var(--low-bg);color:var(--low)}
+.badge.medium{background:var(--medium-bg);color:var(--medium)}
+.badge.high{background:var(--high-bg);color:var(--high)}
+.clause-body{
+  margin-top:12px;
+  display:grid;
+  gap:10px;
+}
+.label{
+  font-weight:800;
+}
+.report-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.report-box{
+  border:1px solid var(--border);
+  background:#fbfcfe;
+  border-radius:14px;
+  padding:16px;
+  white-space:pre-wrap;
+  line-height:1.65;
+  font-size:.96rem;
+}
+.compare-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:16px;
+}
+.compare-item{
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px;
+  background:#fcfcfd;
+}
+.compare-item.best{
+  border:2px solid #86efac;
+  background:#f0fdf4;
+}
+.compare-item h3{
+  margin:0 0 8px;
+  font-size:1.12rem;
+  word-break:break-word;
+}
+.compare-metric{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid #edf1f6;
+}
+.compare-metric:last-child{border-bottom:none}
+.empty{
+  text-align:center;
+  color:var(--muted);
+  padding:26px 10px;
+}
+
+@media (max-width: 720px){
+  .header h1{font-size:2.2rem}
+  .risk-header{grid-template-columns:1fr}
+  .score-wrap{justify-content:flex-start}
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>LoanGuard AI</h1>
+      <p>Understand hidden risks in your loan agreements instantly</p>
+    </div>
+
+    <div class="hero-card">
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".pdf" multiple />
+        <div><strong>Upload one or more loan agreement PDFs</strong></div>
+        <div class="upload-note">
+          The system ingests dense legal documents, extracts risky clauses, explains them in plain English,
+          estimates monetary impact, and compares multiple offers side by side.
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-primary" id="analyzeBtn">Analyze Loan Agreement(s)</button>
+        <button class="btn-secondary" id="clearBtn" type="button">Clear Files</button>
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+
+      <div class="features-grid">
+        <div class="feature-tile">
+          <h4>1. Intelligent Document Ingestion</h4>
+          <p>Automatically parses uploaded loan PDFs so borrowers do not need to manually read dense legal text.</p>
+        </div>
+        <div class="feature-tile">
+          <h4>2. Financial Risk Clause Detection</h4>
+          <p>Finds prepayment penalties, foreclosure charges, hidden fees, auto-debit mandates, and late-payment clauses.</p>
+        </div>
+        <div class="feature-tile">
+          <h4>3. Plain Language Interpretation</h4>
+          <p>Converts legal clauses into clear, borrower-friendly English explanations.</p>
+        </div>
+        <div class="feature-tile">
+          <h4>4. Clause-Level Risk Scoring</h4>
+          <p>Each clause is rated Low, Medium, or High based on its restrictiveness and financial impact.</p>
+        </div>
+        <div class="feature-tile">
+          <h4>5. Monetary Impact Estimation</h4>
+          <p>Quantifies the rupee impact of risky terms instead of only flagging them.</p>
+        </div>
+        <div class="feature-tile">
+          <h4>6. Overall Loan Risk Assessment</h4>
+          <p>Generates a single risk score that reflects the agreement’s overall borrower risk profile.</p>
+        </div>
+        <div class="feature-tile">
+          <h4>7. Decision-Ready Summary Report</h4>
+          <p>Produces a structured report that can be reviewed independently or shared with a financial advisor.</p>
+        </div>
+        <div class="feature-tile">
+          <h4>8. Loan Comparison Engine</h4>
+          <p>Compares multiple agreements side by side by score, hidden cost, and penalty structure.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="status" id="status"></div>
+    <div id="result"></div>
+  </div>
+
+<script>
+const API_URL = "BACKEND_URL"; // <-- REPLACE WITH YOUR BACKEND URL
+
+const fileInput = document.getElementById("fileInput");
+const analyzeBtn = document.getElementById("analyzeBtn");
+const clearBtn = document.getElementById("clearBtn");
+const fileList = document.getElementById("fileList");
+const statusDiv = document.getElementById("status");
+const resultDiv = document.getElementById("result");
+const uploadZone = document.getElementById("uploadZone");
+
+let selectedFiles = [];
+
+fileInput.addEventListener("change", () => {
+  selectedFiles = Array.from(fileInput.files || []);
+  renderFileList();
+});
+
+clearBtn.addEventListener("click", () => {
+  selectedFiles = [];
+  fileInput.value = "";
+  fileList.innerHTML = "";
+  statusDiv.innerHTML = "";
+  resultDiv.innerHTML = "";
+});
+
+["dragenter", "dragover"].forEach(evt => {
+  uploadZone.addEventListener(evt, e => {
+    e.preventDefault();
+    uploadZone.classList.add("drag");
+  });
+});
+
+["dragleave", "drop"].forEach(evt => {
+  uploadZone.addEventListener(evt, e => {
+    e.preventDefault();
+    uploadZone.classList.remove("drag");
+  });
+});
+
+uploadZone.addEventListener("drop", e => {
+  const files = Array.from(e.dataTransfer.files || []).filter(f => f.name.toLowerCase().endsWith(".pdf"));
+  if (files.length) {
+    selectedFiles = files;
+    const dt = new DataTransfer();
+    files.forEach(f => dt.items.add(f));
+    fileInput.files = dt.files;
+    renderFileList();
+  }
+});
+
+function renderFileList() {
+  if (!selectedFiles.length) {
+    fileList.innerHTML = "";
+    return;
+  }
+
+  fileList.innerHTML = selectedFiles.map((file, i) => `
+    <div class="file-item">
+      <div>
+        <div class="file-name">${i + 1}. ${escapeHtml(file.name)}</div>
+        <div class="file-meta">${formatSize(file.size)}</div>
+      </div>
+      <button class="btn-outline" type="button" onclick="removeFile(${i})">Remove</button>
+    </div>
+  `).join("");
+}
+
+function removeFile(index) {
+  selectedFiles.splice(index, 1);
+  const dt = new DataTransfer();
+  selectedFiles.forEach(f => dt.items.add(f));
+  fileInput.files = dt.files;
+  renderFileList();
+}
+
+analyzeBtn.addEventListener("click", async () => {
+  if (!selectedFiles.length) {
+    alert("Please upload at least one PDF.");
+    return;
+  }
+
+  analyzeBtn.disabled = true;
+  resultDiv.innerHTML = "";
+  setStatus("Analyzing uploaded document(s)... LoanGuard AI is parsing the PDF, detecting risky clauses, estimating financial impact, and preparing the summary report.", "loading");
+
+  try {
+    const results = [];
+    for (const file of selectedFiles) {
+      const analyzed = await analyzeOneFile(file);
+      analyzed._fileName = file.name;
+      results.push(analyzed);
+    }
+
+    setStatus(`Analysis complete for ${results.length} file(s).`, "success");
+    renderAllResults(results);
+  } catch (err) {
+    console.error(err);
+    setStatus(`Error: ${err.message}`, "error");
+  } finally {
+    analyzeBtn.disabled = false;
+  }
+});
+
+async function analyzeOneFile(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(API_URL, {
+    method: "POST",
+    body: formData
+  });
+
+  const text = await response.text();
+
+  if (text.trim().startsWith("<")) {
+    throw new Error("Backend returned HTML instead of JSON. Check API URL or backend status.");
+  }
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error("Backend returned invalid JSON.");
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || "Analysis failed.");
+  }
+
+  return normalizeData(data);
+}
+
+function normalizeData(data) {
+  return {
+    overall_score: Number(data.overall_score || 0),
+    overall_risk_level: data.overall_risk_level || "Moderate",
+    overall_summary: data.overall_summary || "No summary available.",
+    total_hidden_cost_estimate_rupees: Number(data.total_hidden_cost_estimate_rupees || 0),
+    clauses: Array.isArray(data.clauses) ? data.clauses.map(c => ({
+      title: c.title || "Untitled Clause",
+      type: c.type || "Other",
+      severity: capitalize((c.severity || "Low").toLowerCase()),
+      plain_language_en: c.plain_language_en || "No explanation available.",
+      financial_impact_rupees: Number(c.financial_impact_rupees || 0),
+      recommendation: c.recommendation || "Review carefully before signing."
+    })) : []
+  };
+}
+
+function renderAllResults(results) {
+  let html = `<div class="results-section">`;
+
+  if (results.length === 1) {
+    html += renderSingleResult(results[0]);
+  } else {
+    html += renderComparison(results);
+    html += results.map(r => renderSingleResult(r)).join("");
+  }
+
+  html += `</div>`;
+  resultDiv.innerHTML = html;
+}
+
+function renderSingleResult(data) {
+  const clauseCount = data.clauses.length;
+  const highCount = data.clauses.filter(c => c.severity === "High").length;
+  const mediumCount = data.clauses.filter(c => c.severity === "Medium").length;
+  const lowCount = data.clauses.filter(c => c.severity === "Low").length;
+  const reportText = buildReportText(data);
+
+  return `
+    <div class="card risk-card">
+      <div class="subtle" style="margin-bottom:10px;font-weight:700;">Document: ${escapeHtml(data._fileName || "Loan Agreement")}</div>
+      <div class="risk-header">
+        <div>
+          <h2 class="section-title">Overall Loan Risk Assessment</h2>
+          <p>${escapeHtml(data.overall_summary)}</p>
+          <p><strong>Risk Level:</strong> ${escapeHtml(data.overall_risk_level)}</p>
+          <p><strong>Estimated Hidden Cost:</strong> ₹${formatINR(data.total_hidden_cost_estimate_rupees)}</p>
+        </div>
+        <div class="score-wrap">
+          <div class="score-circle" style="background:conic-gradient(${getColor(data.overall_score)} ${data.overall_score}%, #eceff4 ${data.overall_score}%);">
+            <span>${data.overall_score}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">Detected Clauses</div>
+          <div class="kpi-value">${clauseCount}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">High Risk Clauses</div>
+          <div class="kpi-value">${highCount}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Medium Risk Clauses</div>
+          <div class="kpi-value">${mediumCount}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Low Risk Clauses</div>
+          <div class="kpi-value">${lowCount}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card clauses-card">
+      <h2 class="section-title">Financial Risk Clause Detection</h2>
+      ${
+        data.clauses.length
+          ? `<div class="clause-list">${data.clauses.map(renderClause).join("")}</div>`
+          : `<div class="empty">No risky clauses were detected.</div>`
+      }
+    </div>
+
+    <div class="card report-card">
+      <h2 class="section-title">Decision-Ready Summary Report</h2>
+      <div class="report-actions">
+        <button class="btn-primary" type="button" onclick='downloadReport(${JSON.stringify(encodeURIComponent(reportText))}, ${JSON.stringify(encodeURIComponent(data._fileName || "loan-report"))})'>Download Report</button>
+        <button class="btn-secondary" type="button" onclick='copyReport(${JSON.stringify(encodeURIComponent(reportText))})'>Copy Report</button>
+      </div>
+      <div class="report-box">${escapeHtml(reportText)}</div>
+    </div>
+  `;
+}
+
+function renderClause(c) {
+  return `
+    <div class="clause ${getClass(c.severity)}">
+      <div class="clause-top">
+        <div>
+          <div class="clause-title">${escapeHtml(c.title)}</div>
+          <div class="clause-type">${escapeHtml(c.type)}</div>
+        </div>
+        <span class="badge ${getClass(c.severity)}">${escapeHtml(c.severity)}</span>
+      </div>
+      <div class="clause-body">
+        <div><span class="label">Plain-English Meaning:</span> ${escapeHtml(c.plain_language_en)}</div>
+        <div><span class="label">Estimated Monetary Impact:</span> ₹${formatINR(c.financial_impact_rupees)}</div>
+        <div><span class="label">What the Borrower Should Do:</span> ${escapeHtml(c.recommendation)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderComparison(results) {
+  const sorted = [...results].sort((a, b) => {
+    if (a.overall_score !== b.overall_score) return a.overall_score - b.overall_score;
+    return a.total_hidden_cost_estimate_rupees - b.total_hidden_cost_estimate_rupees;
+  });
+  const bestName = sorted[0]?._fileName;
+
+  return `
+    <div class="card compare-card">
+      <h2 class="section-title">Loan Comparison Engine</h2>
+      <p class="subtle">Compare uploaded agreements side by side using risk score, hidden costs, and detected penalty structure.</p>
+      <div class="compare-grid">
+        ${results.map(r => `
+          <div class="compare-item ${r._fileName === bestName ? "best" : ""}">
+            <h3>${escapeHtml(r._fileName || "Loan Agreement")} ${r._fileName === bestName ? "🏆" : ""}</h3>
+            <div class="compare-metric"><span>Overall Risk Score</span><strong>${r.overall_score}/100</strong></div>
+            <div class="compare-metric"><span>Risk Level</span><strong>${escapeHtml(r.overall_risk_level)}</strong></div>
+            <div class="compare-metric"><span>Estimated Hidden Cost</span><strong>₹${formatINR(r.total_hidden_cost_estimate_rupees)}</strong></div>
+            <div class="compare-metric"><span>Clause Count</span><strong>${r.clauses.length}</strong></div>
+            <div class="compare-metric"><span>High Risk Clauses</span><strong>${r.clauses.filter(c => c.severity === "High").length}</strong></div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function buildReportText(data) {
+  const lines = [];
+  lines.push("LOANGUARD AI — DECISION-READY SUMMARY REPORT");
+  lines.push("=".repeat(52));
+  lines.push(`Document: ${data._fileName || "Loan Agreement"}`);
+  lines.push(`Overall Risk Score: ${data.overall_score}/100`);
+  lines.push(`Overall Risk Level: ${data.overall_risk_level}`);
+  lines.push(`Estimated Hidden Cost: ₹${formatINR(data.total_hidden_cost_estimate_rupees)}`);
+  lines.push("");
+  lines.push("Overall Assessment:");
+  lines.push(data.overall_summary);
+  lines.push("");
+  lines.push("Detected Clauses:");
+  if (!data.clauses.length) {
+    lines.push("- No risky clauses detected");
+  } else {
+    data.clauses.forEach((c, idx) => {
+      lines.push(`${idx + 1}. ${c.title}`);
+      lines.push(`   Type: ${c.type}`);
+      lines.push(`   Severity: ${c.severity}`);
+      lines.push(`   Plain-English Meaning: ${c.plain_language_en}`);
+      lines.push(`   Estimated Monetary Impact: ₹${formatINR(c.financial_impact_rupees)}`);
+      lines.push(`   Recommendation: ${c.recommendation}`);
+      lines.push("");
+    });
+  }
+  return lines.join("\n");
+}
+
+function downloadReport(encodedText, encodedName) {
+  const text = decodeURIComponent(encodedText);
+  const fileNameBase = decodeURIComponent(encodedName).replace(/\.pdf$/i, "");
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${fileNameBase}-LoanGuard-Report.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function copyReport(encodedText) {
+  const text = decodeURIComponent(encodedText);
+  await navigator.clipboard.writeText(text);
+  alert("Report copied.");
+}
+
+function setStatus(message, type) {
+  const cls =
+    type === "loading" ? "status-loading" :
+    type === "success" ? "status-success" :
+    type === "error" ? "status-error" : "";
+  statusDiv.innerHTML = `<div class="status-card ${cls}">${escapeHtml(message)}</div>`;
+}
+
+function getClass(sev) {
+  const s = (sev || "").toLowerCase();
+  if (s === "high") return "high";
+  if (s === "medium") return "medium";
+  return "low";
+}
+
+function getColor(score) {
+  if (score < 40) return "#16a34a";
+  if (score < 70) return "#f59e0b";
+  return "#dc2626";
+}
+
+function formatINR(num) {
+  return Number(num || 0).toLocaleString("en-IN");
+}
+
+function formatSize(bytes) {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function capitalize(str) {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+</script>
+</body>
+</html>
